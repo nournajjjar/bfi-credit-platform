@@ -2,14 +2,40 @@
 
 An internal platform that automates the production of credit / benchmark analysis reports on Tunisian industrial companies. It replaces a manual, multi-day research and drafting process with a guided pipeline: upload a company's financial statements, and the system reads them, researches the company online, forecasts its financials, runs credit stress tests, drafts a full analyst report, and exports it as a formatted Word document — all reviewable and editable from a web dashboard.
 
+## Architecture
+
+![Architecture](docs/assets/architecture.png)
+
+![Use cases](docs/assets/usecase.png)
+
 ## What it does
 
 1. **Financial statement extraction** — Reads uploaded PDF financial statements (balance sheet, income statement, cash flow), locates the relevant pages, and extracts the tables into structured data. Uses text extraction (PyMuPDF / pdfplumber) with keyword pre-filtering to skip irrelevant pages, then an LLM-based OCR pass to parse tables into JSON.
+
+   ![PDF extraction pipeline](docs/assets/extraction.png)
+
 2. **Company research** — Searches the web for company financials, recent news, governance/shareholders, stock listing (BVMT), export activity, and legal/regulatory risk via the [Tavily](https://tavily.com) search API, and cross-references an internal PostgreSQL database of Tunisian industrial companies for sector benchmarking.
 3. **Financial forecasting** — Projects revenue, costs, and results forward using OLS regression, CAGR, and Holt double exponential smoothing.
+
+   ![Forecasting pipeline](docs/assets/forecasting.png)
+
 4. **Credit stress testing** — Models the impact of scenario shocks (demand drop, rate hikes, FX swings) on a company's financial position, including reverse stress testing to find the breaking point.
+
+   ![Stress testing pipeline](docs/assets/stress_testing.png)
+
 5. **RAG-grounded report generation** — Cleans and semantically chunks all collected data (research findings + extracted financials), embeds it locally (sentence-transformers), and stores it in PostgreSQL via `pgvector`. Report sections are drafted by an LLM using retrieved context, then automatically graded against a completeness checklist and regenerated if the score is too low.
-6. **Export & review** — Renders the final report as a Word document (`python-docx` / a Node.js `docx` generator) and exposes it through a React dashboard with job tracking, section version history, and refinement requests.
+
+   ![Report generation pipeline](docs/assets/pipeline.png)
+
+6. **Recommendations engine** — Detects a company's financial vulnerabilities, runs what-if simulations, and uses the LLM to generate tailored short/medium/long-term recommendations.
+
+   ![Recommendations pipeline](docs/assets/recommendations.png)
+
+7. **Conversational refinement** — An in-dashboard assistant answers analyst questions using the RAG context (question mode) or rewrites a report section on request (revision mode), with changes saved for approval.
+
+   ![Chatbot modes](docs/assets/chatbot_modes.png)
+
+8. **Export & review** — Renders the final report as a Word document (`python-docx` / a Node.js `docx` generator) and exposes it through a React dashboard with job tracking, section version history, and refinement requests.
 
 ## Observability & infrastructure
 
