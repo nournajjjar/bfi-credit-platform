@@ -1,0 +1,83 @@
+services:
+
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: bfi_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-tunisie_industrie}
+      POSTGRES_USER:     ${POSTGRES_USER:-bfi_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-bfi_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bfi_user} -d ${POSTGRES_DB:-tunisie_industrie}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: bfi_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_HOST:               db
+      PG_PORT:               5432
+      PG_DB:                 ${POSTGRES_DB:-tunisie_industrie}
+      PG_USER:               ${POSTGRES_USER:-bfi_user}
+      PG_PASSWORD:           ${POSTGRES_PASSWORD:-bfi_password}
+      DATABASE_URL:          postgresql://${POSTGRES_USER:-bfi_user}:${POSTGRES_PASSWORD:-bfi_password}@db:5432/${POSTGRES_DB:-tunisie_industrie}
+      OPENAI_API_KEY:        ${OPENAI_API_KEY}
+      AZURE_ENDPOINT:        ${AZURE_ENDPOINT}
+      AZURE_MODEL:           ${OPENAI_MODEL:-Phi-4}
+      AZURE_EMBED_DEPLOYMENT: ${AZURE_EMBED_DEPLOYMENT:-text-embedding-3-small}
+      TAVILY_API_KEY:        ${TAVILY_API_KEY}
+      JWT_SECRET:            ${JWT_SECRET:-bfi_secret_key_2024}
+      REPORT_OUTPUT_DIR:     database/output
+      MLFLOW_TRACKING_URI:   http://mlflow:5000
+      LAMINAR_API_KEY:       ${LAMINAR_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./database/output:/app/database/output
+      - ./mlflow-artifacts:/app/mlflow-artifacts
+      - ./mlflow.db:/app/mlflow.db
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: bfi_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+  mlflow:
+    image: python:3.11-slim
+    container_name: bfi_mlflow
+    restart: unless-stopped
+    command: ["sh", "-c", "pip install mlflow -q && exec mlflow server --backend-store-uri sqlite:////mlflow/mlflow.db --default-artifact-root /mlflow/artifacts --host 0.0.0.0 --port 5000 --allowed-hosts=* --cors-allowed-origins=*"]
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow.db:/mlflow/mlflow.db
+      - ./mlflow-artifacts:/mlflow/artifacts
+volumes:
+  postgres_data:

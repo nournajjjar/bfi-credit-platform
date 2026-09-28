@@ -1,0 +1,3 @@
+# Prompts are embedded directly in services/sections.py and services/llm_sections.py
+# This file is a placeholder for future prompt externalization
+version: "1.0"

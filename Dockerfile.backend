@@ -1,0 +1,29 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# System dependencies + Node.js (for generate_report.js)
+RUN apt-get update && apt-get install -y \
+    gcc g++ libpq-dev curl gnupg \
+    && curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --timeout=120 --retries=5 -r requirements.txt && \
+    pip install --no-cache-dir pg8000 bcrypt PyJWT python-jose[cryptography]
+RUN pip install --no-cache-dir lmnr
+# Node.js dependencies for generate_report.js
+COPY package*.json ./
+RUN npm install --production 2>/dev/null || true
+
+# App code
+COPY . .
+
+# Create required directories
+RUN mkdir -p logs database/output mlflow-artifacts models
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

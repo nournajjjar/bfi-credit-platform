@@ -1,0 +1,45 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv_tunisie/
+venv/
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/dist/
+
+# MLflow
+mlflow.db
+mlflow-artifacts/
+
+# Logs
+logs/
+*.log
+
+# Cache / runtime data
+cache/
+database/output/
+database/input/
+
+# Generated reports / large binaries
+*.docx
+models/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Scratch / debug files
+sah_report_check.txt
+.py
