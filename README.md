@@ -37,6 +37,21 @@ An internal platform that automates the production of credit / benchmark analysi
 
 8. **Export & review** — Renders the final report as a Word document (`python-docx` / a Node.js `docx` generator) and exposes it through a React dashboard with job tracking, section version history, and refinement requests.
 
+## Screenshots
+
+> Some screenshots below have company-specific financial figures blacked out before publishing, since this repo is public.
+
+| | |
+|---|---|
+| **Login** | **Report generation** (PDF upload + live progress) |
+| ![Login](docs/assets/screenshots/login.png) | ![Report generation](docs/assets/screenshots/report_generation.png) |
+| **Dashboard** | **Chatbot** (Q&A + section revision) |
+| ![Dashboard](docs/assets/screenshots/dashboard.png) | ![Chatbot](docs/assets/screenshots/chatbot.png) |
+| **Forecasting** | **Stress testing** |
+| ![Forecasting](docs/assets/screenshots/forecast.png) | ![Stress testing](docs/assets/screenshots/stress_test.png) |
+| **Strategy recommendations** | |
+| ![Strategies](docs/assets/screenshots/strategies.png) | |
+
 ## Observability & infrastructure
 
 - **MLflow** — every pipeline run (forecast, stress test, report generation) is logged as an experiment: model used, prompts, sources retrieved, and a faithfulness/hallucination score comparing generated text against its source context.
